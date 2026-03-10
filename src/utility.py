@@ -82,6 +82,6 @@ def run_model(prompt, schema:BaseModel, model:Literal["gpt-5.4", "gpt-5.3", "cla
 def parse_output_json(output, schema:BaseModel):
     try:
         output = output.replace("```json", "").replace("```", "")
-        return schema.model_validate(output)
+        return dict(schema.model_validate(output))
     except Exception as e:
         raise ValueError(f"Failed to parse output as JSON: {e}")
