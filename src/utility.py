@@ -4,6 +4,7 @@ from anthropic import Anthropic
 
 from dotenv import load_dotenv
 import os
+import json
 
 from pydantic import BaseModel
 from typing import Literal
@@ -27,9 +28,9 @@ def run_openai_models(prompt, model, temperature=0.7, max_tokens=150):
 
     response = client.responses.create(
         model=model,
-        prompt=prompt,
+        input=prompt,
         temperature=temperature,
-        max_tokens=max_tokens
+        max_output_tokens=max_tokens
     )
 
     return response.output_text
@@ -44,7 +45,8 @@ def run_anthropic_models(prompt, model, temperature=0.7, max_tokens=150):
         max_tokens=max_tokens
     )
 
-    return response.content
+    text_parts = [block.text for block in response.content if hasattr(block, "text")]
+    return "\n".join(text_parts)
 
 def run_google_models(prompt, model, temperature=0.7, max_tokens=150):
     client = genai.Client(api_key=GOOGLE_API_KEY)
@@ -73,7 +75,12 @@ def run_model(prompt, schema:BaseModel, model:Literal["gpt-5.4", "gpt-5.3", "cla
     else:
         raise ValueError("Unsupported model specified")
     
-    prompt_text = f"{prompt}\n\nPlease format the output as JSON matching the following schema:\n{dict(schema)}"
+    schema_json = schema.model_json_schema()
+    prompt_text = (
+        f"{prompt}\n\n"
+        "Return only valid JSON matching this schema exactly. Do not add markdown or code fences.\n"
+        f"{json.dumps(schema_json)}"
+    )
 
     output = model_run_function(prompt_text, model, temperature, max_tokens)
 
@@ -81,7 +88,7 @@ def run_model(prompt, schema:BaseModel, model:Literal["gpt-5.4", "gpt-5.3", "cla
 
 def parse_output_json(output, schema:BaseModel):
     try:
-        output = output.replace("```json", "").replace("```", "")
-        return dict(schema.model_validate(output))
+        cleaned_output = output.replace("```json", "").replace("```", "").strip()
+        return schema.model_validate_json(cleaned_output).model_dump()
     except Exception as e:
         raise ValueError(f"Failed to parse output as JSON: {e}")
