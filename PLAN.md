@@ -33,9 +33,21 @@ The scoring range will be:
 7–8 = strong
 9–10 = exceptional
 
+The aggregate score for analysis will be the sum of these values.
+
+Diction will be analyzed as followed:
+1. Average word length
+2. Average sentence length
+3. Latinate-to-Germanic word ratio
+4. Unique words-to-word count ratio
+
 Finally, we perform statistical analysis to determine whether score differences are associated with literary devices, diction patterns, and hidden authorial variables.
 
 Because each poem is evaluated by every LLM, poem-level pairing must be preserved in the analysis. Lower temperature helps reduce randomness, but it is not a substitute for statistical control. We still control for poem-level repeated measures in the tests below.
+
+To avoid LLM memorization, we will first ask each LLM to tell us the author of a poem without any external tools. Should the model hallucinate or respond with a failure, we will consider the poem to be "unrecognized". Should the LLM respond with the correct author, we will consider this poem to be "recognized". If all of the poems fail to recognize the author, then this poem is valid for use.
+
+We do this instead of choosing post cut-off time because the most up to date models are releasing monthly, which is not enough time for enough artists to produce poems, and prevents us from accessing older poems that would provide interesting statistical insight.
 
 ## What We Compare And Which Test To Use
 
