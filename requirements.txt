@@ -1,0 +1,10 @@
+numpy
+pandas
+pydantic
+python-dotenv
+openai
+anthropic
+google-genai
+lxml
+scipy
+statsmodels
