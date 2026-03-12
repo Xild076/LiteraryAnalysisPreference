@@ -37,9 +37,8 @@ The aggregate score for analysis will be the sum of these values.
 
 Diction will be analyzed as followed:
 1. Average word length
-2. Average sentence length
-3. Latinate-to-Germanic word ratio
-4. Unique words-to-word count ratio
+2. Latinate-to-Germanic word ratio
+3. Unique words-to-word count ratio
 
 Finally, we perform statistical analysis to determine whether score differences are associated with literary devices, diction patterns, and hidden authorial variables.
 
