@@ -8,3 +8,4 @@ google-genai
 lxml
 scipy
 statsmodels
+PySide6

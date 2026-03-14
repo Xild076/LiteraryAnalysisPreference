@@ -21,4 +21,3 @@ poem_id, poem_text, poem_fetch_url, poem_genre, year_of_publish, author_name, au
 
 For each fo the author specifics, it may be labeled as "anonymous"
 
-Dataset: http://etym.org/ + wordnet

@@ -22,6 +22,8 @@ INPUT_REQUIRED_COLUMNS = [
 
 INFERENCE_REQUIRED_COLUMNS = [
     "poem_id",
+    "source_input_fingerprint",
+    "input_poem_cache_key",
     "model",
     "status",
     "skip_reason",
@@ -34,9 +36,7 @@ INFERENCE_REQUIRED_COLUMNS = [
     "author_gender",
     "author_ethnicity",
     "author_nationality",
-    "literary_devices_rationale",
     "literary_devices",
-    "score_rationale",
     "technical_craft_score",
     "structure_score",
     "diction_score",
@@ -135,6 +135,10 @@ def _normalize_inference_status(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[skipped_mask, "skip_reason"] = "prior_knowledge_detected"
     if "prior_knowledge_detected_models" not in df.columns:
         df["prior_knowledge_detected_models"] = "[]"
+    if "source_input_fingerprint" not in df.columns:
+        df["source_input_fingerprint"] = ""
+    if "input_poem_cache_key" not in df.columns:
+        df["input_poem_cache_key"] = ""
     if "literary_devices" in df.columns:
         df["literary_devices"] = df["literary_devices"].apply(_coerce_devices)
     else:

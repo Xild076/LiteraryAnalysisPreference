@@ -71,3 +71,12 @@ We do this instead of choosing post cut-off time because the most up to date mod
 5. Do LLMs differ in how authorial variables relate to score?
     - Data: model-by-author-variable interactions.
     - Test: Mixed-effects model with interactions, for example `score ~ model * author_variable + (1 | poem_id)`.
+
+6. Do models differ in AI-vs-non-AI preference gaps?
+    - Data: `poem_origin_label` grouped as AI (`ai made`) vs non-AI (all other non-empty labels).
+    - Primary test: mixed-effects interaction likelihood-ratio test with:
+      - Full model: `score ~ model * poem_origin_group + (1 | poem_id)`
+      - Reduced model: `score ~ model + poem_origin_group + (1 | poem_id)`
+    - Null hypothesis: AI-minus-non-AI score gap is the same across models.
+    - Alternative hypothesis: at least one model has a different AI-minus-non-AI gap.
+    - Post-hoc: pairwise model-by-model gap-difference interaction tests, BH-adjusted within each score metric.

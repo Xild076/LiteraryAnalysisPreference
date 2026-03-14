@@ -1,118 +1,104 @@
 # LLM Cost Estimate for Literary Analysis Project
 
-## Per-Poem Token Estimates
+## Corpus Basis
 
-### Input: Average Poem
-- **Average word count:** 200 words (liberal estimate)
-- **Average characters per word:** 5
-- **Total characters:** 200 × 6 = 1,200 characters
-- **Tokens (measured):** ~201 tokens
+- Estimate source: `data/test_input.csv`
+- Current repo state: `data/test_input.csv` contains 7 poems; `data/input.csv` currently contains 0 rows.
+- Corpus totals: 4,480 characters, 861 words.
+- Per-poem averages: 640 characters, 123 words.
+- Token heuristic: approximately 4 characters per token, following Google's token guidance: <https://ai.google.dev/gemini-api/docs/tokens>
+- Approximate raw poem text size: 160 input tokens per poem on average, with a range of about 94 to 266.
 
-### Prompt 0: Prior Knowledge Check
-- Instruction text: ~39 tokens
-- Schema (`CheckPriorKnowledgeInference`): ~77 tokens
-- Poem text: ~201 tokens
-- **Total input:** ~317 tokens per poem
+These estimates are for cold runs with no cache hits. Each poem triggers 3 calls per model:
 
-### Prompt 1: Literary Devices Inference
-- Instruction text + devices list (35 devices): ~149 tokens
-- Schema (`LiteraryDevicesInference`): ~139 tokens
-- Poem text: ~201 tokens
-- **Total input:** ~489 tokens per poem
+1. Prior knowledge check
+2. Literary devices inference
+3. Score inference
 
-### Prompt 2: Score Inference
-- Instruction & rubric: ~78 tokens
-- Schema (`ScoreInference`): ~293 tokens
-- Poem text: ~201 tokens
-- **Total input:** ~572 tokens per poem
+Across 3 models, that is 9 API calls per poem.
 
-### Expected Outputs (per inference)
-- **Prior Knowledge Check:** ~10 tokens
-- **Literary Devices:** Rationale (~200 tokens) + device list (~20 tokens) = ~220 tokens
-- **Score:** Rationale (~300 tokens) + 5 numerical scores (~10 tokens) = ~310 tokens
+## Average Input Tokens Per Poem Per Model
 
----
+The numbers below include poem text, instructions, and the JSON schema appended by `run_model()`.
 
-## Cost Breakdown per Poem (2 inferences × 3 models = 6 API calls)
+| Call | Legacy rationale pipeline | Implemented no-rationale pipeline |
+| --- | ---: | ---: |
+| Prior knowledge check | 274.43 | 274.43 |
+| Literary devices | 396.14 | 392.00 |
+| Scoring | 441.00 | 414.14 |
+| **Total input per poem per model** | **1,111.57** | **1,080.57** |
 
-### Input Tokens (all models)
-- Prior Knowledge Check: 317 tokens × 3 models = 951 tokens
-- Literary Devices: 489 tokens × 3 models = 1,467 tokens
-- Scoring: 572 tokens × 3 models = 1,716 tokens
-- **Total input: 4,134 tokens per poem**
+## Representative Output Tokens Per Poem Per Model
 
-### Output Tokens (estimates)
-- Prior Knowledge Check: 10 tokens × 3 models = 30 tokens
-- Literary Devices: 220 tokens × 3 models = 660 tokens
-- Scoring: 310 tokens × 3 models = 930 tokens
-- **Total output: 1,620 tokens per poem**
+These are estimated from compact valid JSON payloads, not the configured max-token caps.
 
----
+| Call | Legacy rationale pipeline | Implemented no-rationale pipeline |
+| --- | ---: | ---: |
+| Prior knowledge check | 8 | 8 |
+| Literary devices | 40 | 18 |
+| Scoring | 60 | 28 |
+| **Total output per poem per model** | **108** | **54** |
 
-## Pricing (estimated 2026 rates)
+The input reduction from removing rationales is modest because prompt and schema overhead dominate this corpus. The output reduction is larger because the free-text rationales are gone.
 
-### Model Pricing (per 1M tokens)
-- **GPT-5.4:** Input $2.50, Output $15.00
-- **Claude 4.6 Opus:** Input $5.00, Output $25.00
-- **Gemini 3.1 Pro:** Input $2.00, Output $12.00
+## Pricing References
 
-### Cost per Poem (per model)
+Current official pricing pages used for this estimate:
 
-Per-model input: 1,378 tokens. Per-model output: 540 tokens.
+- OpenAI GPT-5.4: <https://openai.com/api/pricing/>
+- Anthropic Claude Opus 4.6: <https://docs.anthropic.com/en/docs/about-claude/pricing>
+- Google Gemini 3.1 Pro Preview: <https://ai.google.dev/pricing>
 
-| Model | Rate (Input / Output per 1M) | Input Cost | Output Cost | Total Cost |
-|-------|------------------------------|-----------|------------|------------|
-| GPT-5.4 | $2.50 / $15.00 | $0.003445 | $0.008100 | **$0.011545** |
-| Claude Opus | $5.00 / $25.00 | $0.006890 | $0.013500 | **$0.020390** |
-| Gemini Pro | $2.00 / $12.00 | $0.002756 | $0.006480 | **$0.009236** |
+Rates used:
 
-### **Cost per Poem (all 3 models):** ~$0.041171
+| Model | Input / 1M tokens | Output / 1M tokens |
+| --- | ---: | ---: |
+| GPT-5.4 | $2.50 | $15.00 |
+| Claude Opus 4.6 | $5.00 | $25.00 |
+| Gemini 3.1 Pro Preview | $2.00 | $12.00 |
 
----
+## Cost Per Poem
 
-## Scaling to Full Dataset
+### Legacy rationale pipeline
 
-| Poem Count | Total Cost | GPT-5.4 | Claude | Gemini | Notes |
-|-----------|-----------|---------|--------|--------|-------|
-| 10 | $0.41 | $0.12 | $0.20 | $0.09 | Test batch |
-| 50 | $2.06 | $0.58 | $1.02 | $0.46 | |
-| 100 | $4.12 | $1.15 | $2.04 | $0.92 | |
-| 500 | $20.59 | $5.77 | $10.20 | $4.62 | |
-| 1,000 | $41.17 | $11.55 | $20.39 | $9.24 | Full-scale run |
+| Model | Cost per poem |
+| --- | ---: |
+| GPT-5.4 | $0.004399 |
+| Claude Opus 4.6 | $0.008258 |
+| Gemini 3.1 Pro Preview | $0.003519 |
+| **All 3 models** | **$0.016176** |
 
----
+### Implemented no-rationale pipeline
 
-## Full-Scale Allocation With Leeway (1,000 Poems)
+| Model | Cost per poem |
+| --- | ---: |
+| GPT-5.4 | $0.003511 |
+| Claude Opus 4.6 | $0.006753 |
+| Gemini 3.1 Pro Preview | $0.002809 |
+| **All 3 models** | **$0.013073** |
 
-Baseline full-scale API cost is **$41.17**.
+Removing rationales lowers the estimated cold-run cost by about 19.18% on this corpus.
 
-### Budget by Leeway Level
+## Scale Estimates
 
-| Leeway | Formula | Total Budget |
-|-------|---------|--------------|
-| 0% | $41.17 × 1.00 | **$41.17** |
-| 15% | $41.17 × 1.15 | **$47.35** |
-| 25% | $41.17 × 1.25 | **$51.46** |
-| 40% | $41.17 × 1.40 | **$57.64** |
+### Legacy rationale pipeline
 
-### Specific Allocation (Recommended: 25% Leeway)
+| Poem count | Estimated total |
+| --- | ---: |
+| 7 | $0.113231 |
+| 100 | $1.62 |
+| 1,000 | $16.18 |
 
-Using a **$51.46** budget cap:
+### Implemented no-rationale pipeline
 
-- **Core planned inference (all poems, all models):** $41.17
-- **Retry / transient API failures reserve (10%):** $4.12
-- **Longer-than-expected outputs reserve (7.5%):** $3.09
-- **Prompt iteration / QA spot-check reserve (7.5%):** $3.09
+| Poem count | Estimated total |
+| --- | ---: |
+| 7 | $0.091514 |
+| 100 | $1.31 |
+| 1,000 | $13.07 |
 
-Total allocated: **$51.47**
+## Notes
 
-### Model-Level Allocation at 25% Leeway
-
-| Model | Baseline (1,000 poems) | With 25% Leeway |
-|------|----------|------------------|
-| GPT-5.4 | $11.55 | $14.43 |
-| Claude 4.6 Opus | $20.39 | $25.49 |
-| Gemini 3.1 Pro | $9.24 | $11.55 |
-| **Total** | **$41.17** | **$51.46** |
-
-Note: Current `data/poems.csv` has 1 poem row, so this is a projection for the full target dataset.
+- These are approximation-grade planning numbers, not invoice-grade forecasts.
+- They exclude retries, vendor-side prompt caching, and any future prompt or schema changes.
+- The no-rationale estimate matches the code currently implemented in `src/inference.py`.
